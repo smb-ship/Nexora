@@ -2,6 +2,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 
 from app.db.session import get_db
 from app.models.chat import ChatWidgetSettings, ChatVisitor, ChatConversation, ChatMessage, ChatConversationStatus
@@ -43,7 +44,7 @@ def visitor_send_message(conversation_id: uuid.UUID, payload: ChatMessageCreate,
 
     message = ChatMessage(conversation_id=conversation.id, sender_type="visitor", body=payload.body)
     db.add(message)
-    conversation.updated_at = message.created_at
+    conversation.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(message)
     return message

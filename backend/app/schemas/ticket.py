@@ -51,7 +51,7 @@ class TicketOut(BaseModel):
     priority: TicketPriority
     requester_name: str
     requester_email: str
-    created_by: uuid.UUID
+    created_by: uuid.UUID | None = None
     assigned_to: uuid.UUID | None
     team_id: uuid.UUID | None
     organization_id: uuid.UUID

@@ -78,7 +78,7 @@ def agent_reply(
         conversation_id=conversation.id, sender_type="agent", sender_user_id=current_user.id, body=payload.body,
     )
     db.add(message)
-    conversation.updated_at = message.created_at
+    conversation.updated_at = datetime.now(timezone.utc)
     if not conversation.assigned_to:
         conversation.assigned_to = current_user.id
     db.commit()

@@ -1,0 +1,152 @@
+import uuid
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.models.user import User
+from app.models.knowledge import KnowledgeArticle, ArticleStatus
+from app.models.prompt_template import PromptTemplate
+from app.models.ticket_ai_insight import TicketAIInsight
+from app.models.ticket import Ticket
+from app.core.permissions import require_permission, Permission
+from app.ai.embeddings import embed_text, cosine_similarity
+from app.ai.service import AIService, AIServiceError
+from app.schemas.ai_workspace import (
+    RAGQueryRequest, RAGQueryResponse, CitedArticle,
+    PromptTemplateCreate, PromptTemplateOut, TicketInsightSummaryOut,
+)
+
+router = APIRouter(prefix="/ai-workspace", tags=["ai-workspace"])
+
+# Below this similarity score, an article is considered irrelevant and
+# excluded from context — prevents the LLM being fed unrelated articles
+# just because top_k happened to include them.
+MIN_SIMILARITY = 0.25
+
+
+@router.post("/ask", response_model=RAGQueryResponse)
+async def ask_knowledge_base(
+    payload: RAGQueryRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.TICKET_AI_USE)),
+):
+    """Real RAG: embed the question, cosine-similarity rank every published
+    article with a stored embedding, take the top_k above MIN_SIMILARITY,
+    and ask AIService to answer grounded in only those. No keyword search
+    fallback — if nothing is similar enough, the LLM is told so honestly
+    (via the empty-articles path) rather than fed irrelevant context."""
+    articles = db.execute(
+        select(KnowledgeArticle).where(
+            KnowledgeArticle.organization_id == current_user.organization_id,
+            KnowledgeArticle.status == ArticleStatus.PUBLISHED,
+            KnowledgeArticle.embedding.isnot(None),
+        )
+    ).scalars().all()
+
+    if not articles:
+        return RAGQueryResponse(
+            answer="There are no published knowledge base articles with content yet, so I have nothing to search.",
+            cited_articles=[],
+        )
+
+    question_embedding = embed_text(payload.question)
+    scored = sorted(
+        ((a, cosine_similarity(question_embedding, a.embedding)) for a in articles),
+        key=lambda pair: pair[1], reverse=True,
+    )
+    top = [(a, score) for a, score in scored[: payload.top_k] if score >= MIN_SIMILARITY]
+
+    if not top:
+        return RAGQueryResponse(
+            answer="I couldn't find any knowledge base articles relevant enough to answer that confidently.",
+            cited_articles=[],
+        )
+
+    try:
+        answer = await AIService().answer_with_rag(
+            payload.question,
+            [{"id": str(a.id), "title": a.title, "body": a.body} for a, _ in top],
+        )
+    except AIServiceError as exc:
+        raise HTTPException(status_code=502, detail=f"AI provider error: {exc}")
+
+    return RAGQueryResponse(
+        answer=answer,
+        cited_articles=[CitedArticle(id=a.id, title=a.title, similarity=round(score, 3)) for a, score in top],
+    )
+
+
+# --- Prompt library ---
+
+@router.get("/prompts", response_model=list[PromptTemplateOut])
+def list_prompts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.TICKET_AI_USE)),
+):
+    return db.execute(
+        select(PromptTemplate).where(PromptTemplate.organization_id == current_user.organization_id)
+        .order_by(PromptTemplate.created_at.desc())
+    ).scalars().all()
+
+
+@router.post("/prompts", response_model=PromptTemplateOut, status_code=201)
+def create_prompt(
+    payload: PromptTemplateCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.TICKET_AI_USE)),
+):
+    prompt = PromptTemplate(
+        organization_id=current_user.organization_id, created_by=current_user.id,
+        title=payload.title, prompt_text=payload.prompt_text, category=payload.category,
+    )
+    db.add(prompt)
+    db.commit()
+    db.refresh(prompt)
+    return prompt
+
+
+@router.delete("/prompts/{prompt_id}", status_code=204)
+def delete_prompt(
+    prompt_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.TICKET_AI_USE)),
+):
+    prompt = db.get(PromptTemplate, prompt_id)
+    if not prompt or prompt.organization_id != current_user.organization_id:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    db.delete(prompt)
+    db.commit()
+
+
+# --- Conversation insights feed ---
+
+@router.get("/insights", response_model=list[TicketInsightSummaryOut])
+def list_recent_insights(
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Permission.TICKET_AI_USE)),
+):
+    """Browsable feed of the org's most recent per-ticket AI insights
+    (generated by M5's summarize/analyze_sentiment/predict_priority flow,
+    and by email-triggered analysis) — reuses TicketAIInsight verbatim,
+    no new AI generation or duplicated aggregation happens here."""
+    rows = db.execute(
+        select(TicketAIInsight, Ticket.subject)
+        .join(Ticket, Ticket.id == TicketAIInsight.ticket_id)
+        .where(Ticket.organization_id == current_user.organization_id)
+        .order_by(TicketAIInsight.generated_at.desc())
+        .limit(limit)
+    ).all()
+
+    return [
+        TicketInsightSummaryOut(
+            ticket_id=insight.ticket_id, ticket_subject=subject,
+            summary=insight.summary,
+            sentiment=insight.sentiment.value if insight.sentiment else None,
+            predicted_priority=insight.predicted_priority.value if insight.predicted_priority else None,
+            suggested_tags=insight.suggested_tags or [],
+            generated_at=insight.generated_at,
+        )
+        for insight, subject in rows
+    ]

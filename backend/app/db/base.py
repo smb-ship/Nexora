@@ -9,3 +9,6 @@ from app.models.webhook import OutgoingWebhook, WebhookDeliveryLog  # noqa
 from app.models.event_log import EventLog  # noqa
 from app.models.incoming_webhook_key import IncomingWebhookKey  # noqa
 from app.models.chat import ChatWidgetSettings, ChatVisitor, ChatConversation, ChatMessage  # noqa
+from app.models.knowledge import KnowledgeArticle  # noqa
+from app.models.customer_note import CustomerNote  # noqa
+from app.models.prompt_template import PromptTemplate  # noqa

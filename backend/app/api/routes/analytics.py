@@ -8,13 +8,20 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from sqlalchemy import func, select
+
 from app.db.session import get_db
 from app.api.deps import get_current_user
 from app.models.user import User, UserRole
-from app.models.ticket import TicketPriority, TicketStatus, TicketSource
+from app.models.ticket import Ticket, TicketPriority, TicketStatus, TicketSource
+from app.models.chat import ChatConversation, ChatConversationStatus
+from app.models.knowledge import KnowledgeArticle, ArticleStatus
+from app.models.workflow import WorkflowRule
+from app.models.event_log import EventLog
 from app.analytics.filters import AnalyticsFilters
 from app.analytics.service import AnalyticsService
 from app.schemas.analytics import DashboardMetrics, ChartsBundle
+from app.schemas.dashboard import DashboardSummary, DashboardCounts, RecentTicketOut, RecentEventOut
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -106,4 +113,81 @@ def export_analytics(
         content=content,
         media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+    
+@router.get("/dashboard-summary", response_model=DashboardSummary)
+def get_dashboard_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    """Composed endpoint for the Dashboard page. Deliberately reuses
+    AnalyticsService's existing methods rather than re-querying ticket
+    aggregates — see DashboardSummary's docstring. Only genuinely new
+    queries here are chat/KB/workflow counts, recent tickets, recent
+    events, none of which AnalyticsService already computes."""
+    org_id = current_user.organization_id
+    filters = AnalyticsFilters.from_query(org_id)
+    service = AnalyticsService(db)
+
+    metrics = service.dashboard_metrics(filters)
+    charts = service.charts_bundle(filters)
+
+    live_chat_count = db.execute(
+        select(func.count()).select_from(ChatConversation).where(
+            ChatConversation.organization_id == org_id,
+            ChatConversation.status == ChatConversationStatus.OPEN,
+        )
+    ).scalar_one()
+
+    kb_published_count = db.execute(
+        select(func.count()).select_from(KnowledgeArticle).where(
+            KnowledgeArticle.organization_id == org_id,
+            KnowledgeArticle.status == ArticleStatus.PUBLISHED,
+        )
+    ).scalar_one()
+
+    workflows_active = db.execute(
+        select(func.count()).select_from(WorkflowRule).where(
+            WorkflowRule.organization_id == org_id, WorkflowRule.is_active.is_(True),
+        )
+    ).scalar_one()
+    workflows_total = db.execute(
+        select(func.count()).select_from(WorkflowRule).where(WorkflowRule.organization_id == org_id)
+    ).scalar_one()
+
+    counts = DashboardCounts(
+        live_chat_conversations=live_chat_count,
+        knowledge_articles_published=kb_published_count,
+        automation_workflows_active=workflows_active,
+        automation_workflows_total=workflows_total,
+    )
+
+    recent_tickets_rows = db.execute(
+        select(Ticket).where(Ticket.organization_id == org_id)
+        .order_by(Ticket.created_at.desc()).limit(8)
+    ).scalars().all()
+
+    recent_tickets = [
+        RecentTicketOut(
+            id=t.id, subject=t.subject, status=t.status.value, priority=t.priority.value,
+            requester_name=t.requester_name,
+            assigned_to_name=t.assignee.full_name if t.assignee else None,
+            created_at=t.created_at,
+        )
+        for t in recent_tickets_rows
+    ]
+
+    recent_event_rows = db.execute(
+        select(EventLog).where(EventLog.organization_id == org_id)
+        .order_by(EventLog.created_at.desc()).limit(10)
+    ).scalars().all()
+
+    recent_events = [
+        RecentEventOut(event_id=e.event_id, event_type=e.event_type, created_at=e.created_at, data=e.data)
+        for e in recent_event_rows
+    ]
+
+    return DashboardSummary(
+        metrics=metrics, charts=charts, counts=counts,
+        recent_tickets=recent_tickets, recent_events=recent_events,
     )

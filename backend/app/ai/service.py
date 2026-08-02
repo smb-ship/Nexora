@@ -67,6 +67,31 @@ class AIService:
         text = await self._provider.complete(system=system, user=user, temperature=0.3, max_tokens=200)
         return text.strip()
 
+    async def suggest_articles(self, ticket: Ticket, candidates: list[dict]) -> list[dict]:
+        """candidates: list of {"id": str, "title": str, "excerpt": str}.
+        Returns a list of {"id": str, "reason": str} in relevance order, as
+        returned by the model — the router (knowledge.py) resolves these IDs
+        back to full KnowledgeArticle rows."""
+        if not candidates:
+            return []
+        system, user = prompts.suggest_articles_prompt(ticket, candidates)
+        raw = await self._provider.complete(
+            system=system, user=user, temperature=0.0, max_tokens=500, json_mode=True
+        )
+        data = self._parse_json(raw)
+        suggestions = data.get("suggestions")
+        if not isinstance(suggestions, list):
+            raise AIServiceError(f"Malformed suggest_articles response: {raw}")
+        return suggestions
+
+    async def answer_with_rag(self, question: str, articles: list[dict]) -> str:
+        """articles: pre-retrieved top-k KB articles (embedding similarity
+        search happens in the router, not here — this method only asks the
+        LLM to answer grounded in what's passed in)."""
+        system, user = prompts.rag_answer_prompt(question, articles)
+        text = await self._provider.complete(system=system, user=user, temperature=0.2, max_tokens=600)
+        return text.strip()
+
     @staticmethod
     def _parse_json(raw: str) -> dict:
         cleaned = raw.strip()

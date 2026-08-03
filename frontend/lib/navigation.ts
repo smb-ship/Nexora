@@ -24,7 +24,7 @@ export const navigation: NavItem[] = [
   { label: "Inbox", href: "/inbox", icon: Inbox },
   { label: "Live Chat", href: "/chat", icon: MessageCircle },
   { label: "Tickets", href: "/tickets", icon: Ticket },
-  { label: "Customers", href: "/crm", icon: Users },
+  { label: "Customers", href: "/customers", icon: Users },
   { label: "Knowledge Hub", href: "/knowledge", icon: BookOpen },
   { label: "AI Workspace", href: "/ai-workspace", icon: Sparkles },
   { label: "Business Intelligence", href: "/analytics", icon: BarChart3 },

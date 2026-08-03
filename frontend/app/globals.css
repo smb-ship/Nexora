@@ -27,6 +27,16 @@
   --color-destructive: #ef4444;
   --color-info: #3b82f6;
 
+  /* ---------- shadcn/ui default aliases ----------
+     components scaffolded by `shadcn` use these token names directly
+     (Badge, Button, Table, etc. across the app — confirmed in
+     TicketTable.tsx and the Inbox page). Without these, any
+     `text-muted-foreground` / `bg-muted` class silently applies no
+     styling at all in Tailwind v4. Aliased onto the real tokens above
+     rather than duplicating values, so there's one source of truth. */
+  --color-muted: var(--color-surface);
+  --color-muted-foreground: var(--color-foreground-muted);
+
   /* ---------- Radius scale ---------- */
   --radius-sm: 0.375rem;
   --radius-md: 0.625rem;

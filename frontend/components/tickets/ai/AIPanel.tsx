@@ -11,6 +11,7 @@ import { PrioritySection } from "@/components/tickets/ai/PrioritySection";
 import { TagsSection } from "@/components/tickets/ai/TagsSection";
 import { ReplySuggestionSection } from "@/components/tickets/ai/ReplySuggestionSection";
 import { InternalNoteSection } from "@/components/tickets/ai/InternalNoteSection";
+import { SuggestedArticlesSection } from "@/components/tickets/ai/SuggestedArticlesSection";
 
 interface AIPanelProps {
   ticketId: string;
@@ -65,6 +66,7 @@ export function AIPanel({ ticketId, onUseReply, onTicketUpdated }: AIPanelProps)
           <TagsSection ticketId={ticketId} insight={insight} onUpdated={setInsight} />
           <ReplySuggestionSection ticketId={ticketId} onUseReply={onUseReply} />
           <InternalNoteSection ticketId={ticketId} insight={insight} onUpdated={setInsight} />
+          <SuggestedArticlesSection ticketId={ticketId} />
         </div>
       )}
     </div>

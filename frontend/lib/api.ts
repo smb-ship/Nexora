@@ -2,6 +2,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export class ApiError extends Error {
   status: number;
+
   constructor(status: number, message: string) {
     super(message);
     this.status = status;
@@ -23,7 +24,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw new ApiError(res.status, body.detail || "Something went wrong");
   }
 
-  if (res.status === 204) return undefined as T;
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
   return res.json();
 }
 
@@ -40,13 +44,27 @@ export interface User {
 }
 
 export const authApi = {
-  register: (data: { email: string; password: string; full_name?: string; organization_name: string }) =>
-    request<User>("/auth/register", { method: "POST", body: JSON.stringify(data) }),
+  register: (data: {
+    email: string;
+    password: string;
+    full_name?: string;
+    organization_name: string;
+  }) =>
+    request<User>("/api/v1/auth/register", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
   login: (data: { email: string; password: string }) =>
-    request<User>("/auth/login", { method: "POST", body: JSON.stringify(data) }),
+    request<User>("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
-  logout: () => request<void>("/auth/logout", { method: "POST" }),
+  logout: () =>
+    request<void>("/api/v1/auth/logout", {
+      method: "POST",
+    }),
 
-  me: () => request<User>("/auth/me"),
+  me: () => request<User>("/api/v1/auth/me"),
 };

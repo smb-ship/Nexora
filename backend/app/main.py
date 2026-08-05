@@ -46,6 +46,10 @@ app.include_router(ai_workspace.router, prefix="/api/v1")
 def health_check():
     return {"status": "ok"}
 
+@app.get("/")
+def root():
+    return {"status": "ok", "service": "Nexora API"}
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))

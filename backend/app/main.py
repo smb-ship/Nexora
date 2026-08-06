@@ -11,7 +11,7 @@ from app.api.routes import ai
 from app.api.routes import analytics as analytics_router
 from app.core.event_subscribers import register_subscribers
 
-app = FastAPI(title="Nexora API", version="0.1.0")
+app = FastAPI(title="Nexora API", version="0.1.0", redirect_slashes=False)
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,8 +1,3 @@
-// Same fetch-wrapper convention as services/customerPortal.ts and
-// services/workflows.ts (own local `request`, cookie-based JWT via
-// credentials: "include"). Analytics is a domain service like those two,
-// not core auth, so it follows their pattern rather than lib/api/api.ts.
-
 export interface GroupCount {
   key: string;
   count: number;
@@ -54,7 +49,7 @@ export interface AnalyticsFilterParams {
   source?: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1`;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {

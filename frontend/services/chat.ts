@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1`;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -34,10 +34,6 @@ export interface ChatConversationDetail extends ChatConversation {
   messages: ChatMessage[];
 }
 
-// Matches GET /chat/widget-settings' response_model=dict return shape in
-// chat_staff.py exactly: {"public_key", "is_active", "welcome_message"}.
-// Read-only for now — the backend has no PATCH/PUT for widget settings,
-// so there's deliberately no updateWidgetSettings() here yet.
 export interface ChatWidgetSettings {
   public_key: string;
   is_active: boolean;

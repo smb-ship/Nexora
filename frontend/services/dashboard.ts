@@ -1,6 +1,6 @@
 import { analyticsApi, type DashboardMetrics, type ChartsBundle } from "./analytics";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1`;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -47,8 +47,6 @@ export interface DashboardSummary {
   recent_events: RecentEvent[];
 }
 
-// Re-exported so dashboard/page.tsx has one import source rather than
-// pulling from both services/analytics.ts and services/dashboard.ts.
 export { analyticsApi };
 
 export function getDashboardSummary(): Promise<DashboardSummary> {

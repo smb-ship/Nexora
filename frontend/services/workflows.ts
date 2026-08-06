@@ -1,10 +1,6 @@
-// NOTE: this fetch wrapper is a reasonable default (cookie-based JWT via
-// credentials: "include"), not copied from an existing service file — I
-// didn't have one to match against. Adjust API_BASE_URL / the request()
-// helper if your other services do this differently.
 import type { WorkflowRule, WorkflowRuleInput, WorkflowExecutionLog } from "@/types/workflow";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1`;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {

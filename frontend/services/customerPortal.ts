@@ -1,13 +1,9 @@
-// Same fetch-wrapper convention as services/workflows.ts (cookie-based JWT
-// via credentials: "include"). Kept consistent with that file rather than
-// your original service pattern, since that's still the convention I don't
-// have visibility into — swap both together if you want to reconcile them.
 import type {
   CustomerTicketListResponse, CustomerTicketDetail, CustomerTicketCreateInput,
   CustomerComment, CustomerDashboardStats, CustomerTicketStatus, CustomerTicketCategory,
 } from "@/types/customerPortal";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1`;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {

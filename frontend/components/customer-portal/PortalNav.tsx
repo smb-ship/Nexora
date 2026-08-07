@@ -14,7 +14,7 @@ export function PortalNav() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+    const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1`;
     await fetch(`${API_BASE_URL}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
     router.replace("/login");
   };

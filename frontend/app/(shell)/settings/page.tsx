@@ -16,7 +16,7 @@ export default function SettingsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  const apiBase = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1`;
   const embedSnippet = widget
     ? `<script src="${typeof window !== "undefined" ? window.location.origin : ""}/chat-widget.js"\n  data-public-key="${widget.public_key}"\n  data-api-base="${apiBase}"\n  async></script>`
     : "";

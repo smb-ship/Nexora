@@ -1,16 +1,13 @@
 """
 Idempotent seed script for the demo account.
 Safe to run multiple times — skips creation if the user already exists.
-
-Usage (from the backend/ directory, with DATABASE_URL pointed at
-whichever database you want to seed — local or production):
-
-    python -m scripts.seed_demo
 """
 import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import app.main  # noqa: F401 - importing the full app registers every SQLAlchemy model, avoiding relationship resolution errors
 
 from app.db.session import SessionLocal
 from app.models.organization import Organization

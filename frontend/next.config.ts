@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  skipTrailingSlashRedirect: true,
   async rewrites() {
     return [
       {

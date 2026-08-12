@@ -1,0 +1,12 @@
+{
+  "apps": [
+    {
+      "app_id": "app_5ece80c1-c79e-4117-be7d-1e54e2ca190f",
+      "org_id": "user_4bc6f7b6-4aff-49a2-b275-8517ec4c8827",
+      "deploy_url": "https://github.com/smb-ship/Nexora.git",
+      "git_ssh_url": "https://github.com/smb-ship/Nexora.git",
+      "name": "Nexora",
+      "alias": "Nexora"
+    }
+  ]
+}

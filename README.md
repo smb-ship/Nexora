@@ -84,6 +84,35 @@ Roadmap
  Autonomous AI ticket resolution — confidence-gated auto-reply for simple, KB-answerable questions, with automatic escalation to a human agent for anything else
  Customer notification triggers on ticket status change (email/webhook)
  Public marketing/landing page showcasing the live chat widget in context
-Screenshots
 
-(add dashboard, ticket view, AI panel, and analytics screenshots here)
+
+## Screenshots
+
+### Dashboard
+
+![Nexora Dashboard](screenshots/dashboard.png)
+
+### Ticket Management
+
+![Nexora Ticket Management](screenshots/tickets.png)
+
+### AI Workspace
+
+![Nexora AI Workspace](screenshots/ai-workspace.png)
+
+### Analytics
+
+![Nexora Analytics](screenshots/analytics.png)
+
+### Live Chat
+
+![Nexora Live Chat](screenshots/live-chat.png)
+
+### Workflow Automation
+
+![Nexora Workflow Automation](screenshots/automation.png)
+
+### Inbox
+
+![Nexora Inbox](screenshots/inbox.png)
+

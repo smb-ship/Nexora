@@ -19,6 +19,8 @@ from app.workflows.enums import WorkflowTriggerType
 
 router = APIRouter(prefix="/tickets/{ticket_id}/ai", tags=["ai"])
 
+_CURRENT_AI_MODEL = settings.GROQ_MODEL if settings.AI_PROVIDER == "groq" else settings.GEMINI_MODEL
+
 
 def _get_ticket(ticket_id: uuid.UUID, current_user: User, db: Session) -> Ticket:
     ticket = db.get(Ticket, ticket_id)
@@ -63,7 +65,7 @@ async def summarize_ticket(
 
     insight = _get_or_create_insight(ticket_id, db)
     insight.summary = summary
-    insight.model_used = settings.GEMINI_MODEL
+    insight.model_used = _CURRENT_AI_MODEL
     insight.generated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(insight)
@@ -85,7 +87,7 @@ async def analyze_sentiment(
     insight = _get_or_create_insight(ticket_id, db)
     insight.sentiment = sentiment
     insight.sentiment_score = score
-    insight.model_used = settings.GEMINI_MODEL
+    insight.model_used = _CURRENT_AI_MODEL
     insight.generated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(insight)
@@ -109,7 +111,7 @@ async def predict_priority(
 
     insight = _get_or_create_insight(ticket_id, db)
     insight.predicted_priority = priority
-    insight.model_used = settings.GEMINI_MODEL
+    insight.model_used = _CURRENT_AI_MODEL
     insight.generated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(insight)
@@ -130,7 +132,7 @@ async def suggest_tags(
 
     insight = _get_or_create_insight(ticket_id, db)
     insight.suggested_tags = tags
-    insight.model_used = settings.GEMINI_MODEL
+    insight.model_used = _CURRENT_AI_MODEL
     insight.generated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(insight)
@@ -166,7 +168,7 @@ async def generate_internal_note(
 
     insight = _get_or_create_insight(ticket_id, db)
     insight.internal_ai_notes = note
-    insight.model_used = settings.GEMINI_MODEL
+    insight.model_used = _CURRENT_AI_MODEL
     insight.generated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(insight)

@@ -1,0 +1,79 @@
+[1mdiff --git a/frontend/app/(shell)/layout.tsx b/frontend/app/(shell)/layout.tsx[m
+[1mindex 6120934..dfa06ce 100644[m
+[1m--- a/frontend/app/(shell)/layout.tsx[m
+[1m+++ b/frontend/app/(shell)/layout.tsx[m
+[36m@@ -1,55 +1,27 @@[m
+[31m-"use client";[m
+[32m+[m[32mimport "./globals.css";[m
+[32m+[m[32mimport type { Metadata } from "next";[m
+[32m+[m[32mimport { Geist } from "next/font/google";[m
+[32m+[m[32mimport { AuthProvider } from "@/lib/auth-context";[m
+ [m
+[31m-import { useEffect, useState } from "react";[m
+[31m-import { useRouter } from "next/navigation";[m
+[31m-import { Loader2 } from "lucide-react";[m
+[31m-import { Sidebar } from "@/components/layout/Sidebar";[m
+[31m-import { Topbar } from "@/components/layout/Topbar";[m
+[31m-import { fetchCurrentUser } from "@/lib/currentUser";[m
+[32m+[m[32mconst geist = Geist({[m
+[32m+[m[32m  subsets: ["latin"],[m
+[32m+[m[32m});[m
+ [m
+[31m-export default function ShellLayout({[m
+[32m+[m[32mexport const metadata: Metadata = {[m
+[32m+[m[32m  title: "Nexora",[m
+[32m+[m[32m  description: "AI Customer Support Platform",[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mexport default function RootLayout({[m
+   children,[m
+ }: {[m
+   children: React.ReactNode;[m
+ }) {[m
+[31m-  const router = useRouter();[m
+[31m-  const [checked, setChecked] = useState(false);[m
+[31m-[m
+[31m-  useEffect(() => {[m
+[31m-    let active = true;[m
+[31m-    fetchCurrentUser().then((user) => {[m
+[31m-      if (!active) return;[m
+[31m-      if (user?.role === "customer") {[m
+[31m-        router.replace("/portal/dashboard");[m
+[31m-        return;[m
+[31m-      }[m
+[31m-      setChecked(true);[m
+[31m-    });[m
+[31m-    return () => {[m
+[31m-      active = false;[m
+[31m-    };[m
+[31m-  }, [router]);[m
+[31m-[m
+[31m-  if (!checked) {[m
+[31m-    return ([m
+[31m-      <div className="flex h-screen flex-col items-center justify-center gap-3 bg-background">[m
+[31m-        <Loader2 className="h-6 w-6 animate-spin text-primary" />[m
+[31m-        <p className="text-sm text-foreground-muted">Loading Nexora...</p>[m
+[31m-      </div>[m
+[31m-    );[m
+[31m-  }[m
+[31m-[m
+   return ([m
+[31m-    <div className="flex h-screen bg-background">[m
+[31m-      <Sidebar />[m
+[31m-[m
+[31m-      <div className="flex flex-1 flex-col min-w-0">[m
+[31m-        <Topbar />[m
+[31m-[m
+[31m-        <main className="flex-1 overflow-y-auto p-4 md:p-6">[m
+[31m-          <div className="animate-in fade-in duration-300">{children}</div>[m
+[31m-        </main>[m
+[31m-      </div>[m
+[31m-    </div>[m
+[32m+[m[32m    <html lang="en" className="dark">[m
+[32m+[m[32m      <body className={geist.className}>[m
+[32m+[m[32m        <AuthProvider>{children}</AuthProvider>[m
+[32m+[m[32m      </body>[m
+[32m+[m[32m    </html>[m
+   );[m
+ }[m
+\ No newline at end of file[m

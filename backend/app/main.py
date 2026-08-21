@@ -1,6 +1,9 @@
+import logging
 import os
-from fastapi import FastAPI
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api.v1 import auth
 from app.api.routes import (
@@ -11,6 +14,12 @@ from app.api.routes import ai
 from app.api.routes import analytics as analytics_router
 from app.core.event_subscribers import register_subscribers
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="Nexora API", version="0.1.0", redirect_slashes=False)
 
 app.add_middleware(
@@ -20,6 +29,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.error(
+        "Unhandled exception on %s %s: %s: %s",
+        request.method, request.url.path, type(exc).__name__, exc,
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Something went wrong on our end. Please try again."},
+    )
+
 
 register_subscribers()
 

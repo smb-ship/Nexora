@@ -12,3 +12,4 @@ from app.models.chat import ChatWidgetSettings, ChatVisitor, ChatConversation, C
 from app.models.knowledge import KnowledgeArticle  # noqa
 from app.models.customer_note import CustomerNote  # noqa
 from app.models.prompt_template import PromptTemplate  # noqa
+from app.models.agent_conversation import AgentConversation, AgentMessage  # noqa

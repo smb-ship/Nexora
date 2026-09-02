@@ -9,6 +9,7 @@ from app.api.v1 import auth
 from app.api.routes import (
     invitations, organizations, teams, tickets, workflows, customer_portal, customers,
     webhooks, integrations, chat_public, chat_staff, automation_dashboard, knowledge, ai_workspace,
+    agent,
 )
 from app.api.routes import ai
 from app.api.routes import analytics as analytics_router
@@ -63,6 +64,7 @@ app.include_router(chat_staff.router, prefix="/api/v1")
 app.include_router(automation_dashboard.router, prefix="/api/v1")
 app.include_router(knowledge.router, prefix="/api/v1")
 app.include_router(ai_workspace.router, prefix="/api/v1")
+app.include_router(agent.router, prefix="/api/v1")
 
 
 @app.get("/health")

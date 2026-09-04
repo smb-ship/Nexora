@@ -59,7 +59,7 @@ class GeminiProvider(AIProvider):
     ) -> ToolCompletion:
         contents = [self._to_gemini_content(m) for m in messages]
 
-                gemini_tools = (
+        gemini_tools = (
             [
                 types.Tool(
                     function_declarations=[
@@ -76,7 +76,7 @@ class GeminiProvider(AIProvider):
             else []
         )
 
-                config = types.GenerateContentConfig(
+        config = types.GenerateContentConfig(
             system_instruction=system,
             temperature=temperature,
             max_output_tokens=max_tokens,

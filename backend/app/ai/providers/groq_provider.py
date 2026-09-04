@@ -65,7 +65,7 @@ class GroqProvider(AIProvider):
             for t in tools
         ]
 
-                kwargs = {}
+        kwargs = {}
         if groq_tools:
             kwargs["tools"] = groq_tools
             kwargs["tool_choice"] = "auto"

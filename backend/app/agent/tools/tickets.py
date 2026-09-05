@@ -9,9 +9,11 @@ from datetime import datetime, timezone
 from sqlalchemy import or_, select
 
 from app.agent.security.tool_permissions import ToolRisk
+from app.agent.security.validators import MAX_LONG_FIELD_LENGTH, MAX_SHORT_FIELD_LENGTH, check_text_length
 from app.agent.tool_registry import ToolResult
 from app.agent.tools.base import AgentToolContext, AgentToolRegistry
 from app.core.events import EventType, emit_event
+from app.core.permissions import Permission
 from app.models.ticket import Ticket, TicketComment, TicketPriority, TicketStatus
 from app.models.user import User
 
@@ -122,6 +124,12 @@ async def _create_ticket(args: dict, ctx: AgentToolContext) -> ToolResult:
             success=False,
             summary="subject, description, requester_name, and requester_email are all required.",
         )
+    for err in (
+        check_text_length(subject, "subject", MAX_SHORT_FIELD_LENGTH),
+        check_text_length(description, "description", MAX_LONG_FIELD_LENGTH),
+    ):
+        if err:
+            return ToolResult(success=False, summary=err)
 
     priority = TicketPriority.MEDIUM
     if args.get("priority"):
@@ -172,9 +180,15 @@ async def _update_ticket(args: dict, ctx: AgentToolContext) -> ToolResult:
 
     changed = []
     if "subject" in args and args["subject"]:
+        err = check_text_length(args["subject"], "subject", MAX_SHORT_FIELD_LENGTH)
+        if err:
+            return ToolResult(success=False, summary=err)
         ticket.subject = args["subject"]
         changed.append("subject")
     if "description" in args and args["description"]:
+        err = check_text_length(args["description"], "description", MAX_LONG_FIELD_LENGTH)
+        if err:
+            return ToolResult(success=False, summary=err)
         ticket.description = args["description"]
         changed.append("description")
 
@@ -292,6 +306,9 @@ async def _add_internal_note(args: dict, ctx: AgentToolContext) -> ToolResult:
     body = (args.get("body") or "").strip()
     if not body:
         return ToolResult(success=False, summary="body is required.")
+    err = check_text_length(body, "body", MAX_LONG_FIELD_LENGTH)
+    if err:
+        return ToolResult(success=False, summary=err)
 
     comment = TicketComment(ticket_id=ticket.id, author_id=ctx.user.id, body=body, is_internal_note=True)
     ctx.db.add(comment)
@@ -379,6 +396,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.WRITE,
         executor=_create_ticket,
+        required_permission=Permission.TICKET_CREATE,
     )
     registry.register(
         name="update_ticket",
@@ -394,6 +412,10 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.WRITE,
         executor=_update_ticket,
+        # Matches the existing PATCH /tickets/{id} route, which gates
+        # this same subject/description/status/priority/assignment
+        # bundle behind a single permission.
+        required_permission=Permission.TICKET_UPDATE_STATUS,
     )
     registry.register(
         name="change_ticket_status",
@@ -411,6 +433,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.WRITE,
         executor=_change_ticket_status,
+        required_permission=Permission.TICKET_UPDATE_STATUS,
     )
     registry.register(
         name="change_ticket_priority",
@@ -425,6 +448,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.WRITE,
         executor=_change_ticket_priority,
+        required_permission=Permission.TICKET_UPDATE_PRIORITY,
     )
     registry.register(
         name="assign_ticket",
@@ -439,6 +463,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.WRITE,
         executor=_assign_ticket,
+        required_permission=Permission.TICKET_ASSIGN,
     )
     registry.register(
         name="add_internal_note",
@@ -450,6 +475,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.WRITE,
         executor=_add_internal_note,
+        required_permission=Permission.TICKET_INTERNAL_NOTE,
     )
     registry.register(
         name="get_ticket_history",

@@ -9,9 +9,11 @@ import uuid
 from sqlalchemy import or_, select
 
 from app.agent.security.tool_permissions import ToolRisk
+from app.agent.security.validators import MAX_LONG_FIELD_LENGTH, check_text_length
 from app.agent.tool_registry import ToolResult
 from app.agent.tools.base import AgentToolContext, AgentToolRegistry
 from app.ai.service import AIService, AIServiceError
+from app.core.permissions import Permission
 from app.models.ticket import Ticket, TicketComment
 
 
@@ -127,8 +129,12 @@ async def _send_customer_reply(args: dict, ctx: AgentToolContext) -> ToolResult:
     if not ticket:
         return ToolResult(success=False, summary="Ticket not found in this organization.")
 
-    if not (args.get("body") or "").strip():
+    body = (args.get("body") or "").strip()
+    if not body:
         return ToolResult(success=False, summary="body is required.")
+    err = check_text_length(body, "body", MAX_LONG_FIELD_LENGTH)
+    if err:
+        return ToolResult(success=False, summary=err)
 
     return ToolResult(
         success=False,
@@ -141,6 +147,9 @@ async def _send_customer_reply(args: dict, ctx: AgentToolContext) -> ToolResult:
 
 
 def register(registry: AgentToolRegistry) -> None:
+    # get_conversation/search_conversations: no required_permission -
+    # ticket comments are returned as part of GET /tickets/{id}, which
+    # has no permission gate beyond being authenticated staff.
     registry.register(
         name="get_conversation",
         description="Get the public message thread for a ticket (excludes internal notes).",
@@ -179,6 +188,9 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.READ,
         executor=_draft_customer_reply,
+        # Matches the existing suggest_reply route (POST /ai/.../suggest-reply),
+        # which calls the same AIService().suggest_reply() behind this permission.
+        required_permission=Permission.TICKET_AI_USE,
     )
     registry.register(
         name="send_customer_reply",
@@ -190,4 +202,6 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.HIGH_RISK,
         executor=_send_customer_reply,
+        # Matches the public-reply path of POST /tickets/{id}/comments.
+        required_permission=Permission.TICKET_COMMENT,
     )

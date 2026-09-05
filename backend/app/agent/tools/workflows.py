@@ -5,6 +5,7 @@ from sqlalchemy import select
 from app.agent.security.tool_permissions import ToolRisk
 from app.agent.tool_registry import ToolResult
 from app.agent.tools.base import AgentToolContext, AgentToolRegistry
+from app.core.permissions import Permission
 from app.models.ticket import Ticket
 from app.models.workflow import WorkflowRule
 from app.workflows.enums import WorkflowTriggerType
@@ -94,6 +95,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.READ,
         executor=_get_workflow,
+        required_permission=Permission.WORKFLOW_MANAGE,
     )
     registry.register(
         name="list_workflows",
@@ -104,6 +106,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.READ,
         executor=_list_workflows,
+        required_permission=Permission.WORKFLOW_MANAGE,
     )
     registry.register(
         name="trigger_workflow",
@@ -121,4 +124,5 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.HIGH_RISK,
         executor=_trigger_workflow,
+        required_permission=Permission.WORKFLOW_MANAGE,
     )

@@ -29,9 +29,15 @@ class AgentTurnResult:
 
 
 class AgentOrchestrator:
-    def __init__(self, tool_registry: ToolRegistry, provider=None) -> None:
+    def __init__(self, tool_registry: ToolRegistry, provider=None, system_prompt: str | None = None) -> None:
         self._tools = tool_registry
         self._provider = provider or get_ai_provider()
+        # Defaults to the customer-chatbot prompt above so every existing
+        # caller (app/api/routes/agent.py constructs this with only
+        # tool_registry=) behaves identically to before. The Support
+        # Operations Agent passes its own prompt from
+        # app.agent.security.validators.OPERATIONS_AGENT_SYSTEM_PROMPT.
+        self._system_prompt = system_prompt or SYSTEM_PROMPT
 
     async def run_turn(self, history: list[dict], user_message: str, context: ToolContext) -> AgentTurnResult:
         """
@@ -48,7 +54,7 @@ class AgentOrchestrator:
         for _ in range(MAX_TOOL_ITERATIONS):
             try:
                 result = await self._provider.complete_with_tools(
-                    system=SYSTEM_PROMPT,
+                    system=self._system_prompt,
                     messages=messages,
                     tools=self._tools.definitions(),
                 )

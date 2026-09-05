@@ -1,7 +1,9 @@
+from app.agent.orchestrator import AgentOrchestrator
+from app.agent.security.validators import OPERATIONS_AGENT_SYSTEM_PROMPT
 from app.agent.tools import communications, customers, knowledge, teams, tickets, workflows
 from app.agent.tools.base import AgentToolContext, AgentToolRegistry
 
-__all__ = ["AgentToolContext", "AgentToolRegistry", "build_operations_registry"]
+__all__ = ["AgentToolContext", "AgentToolRegistry", "build_operations_registry", "build_operations_orchestrator"]
 
 
 def build_operations_registry() -> AgentToolRegistry:
@@ -18,3 +20,14 @@ def build_operations_registry() -> AgentToolRegistry:
     workflows.register(registry)
     teams.register(registry)
     return registry
+
+
+def build_operations_orchestrator(provider=None) -> AgentOrchestrator:
+    """Single entry point Milestone 4's routes should use: the existing
+    AgentOrchestrator, wired to the operations registry and its own
+    (non-customer-facing) system prompt."""
+    return AgentOrchestrator(
+        tool_registry=build_operations_registry(),
+        provider=provider,
+        system_prompt=OPERATIONS_AGENT_SYSTEM_PROMPT,
+    )

@@ -3,8 +3,10 @@ import uuid
 from sqlalchemy import or_, select
 
 from app.agent.security.tool_permissions import ToolRisk
+from app.agent.security.validators import MAX_LONG_FIELD_LENGTH, check_text_length
 from app.agent.tool_registry import ToolResult
 from app.agent.tools.base import AgentToolContext, AgentToolRegistry
+from app.core.permissions import Permission
 from app.models.customer_note import CustomerNote
 from app.models.ticket import Ticket
 from app.models.user import User, UserRole
@@ -129,6 +131,9 @@ async def _add_customer_note(args: dict, ctx: AgentToolContext) -> ToolResult:
     body = (args.get("body") or "").strip()
     if not body:
         return ToolResult(success=False, summary="body is required.")
+    err = check_text_length(body, "body", MAX_LONG_FIELD_LENGTH)
+    if err:
+        return ToolResult(success=False, summary=err)
 
     note = CustomerNote(organization_id=ctx.organization_id, customer_id=customer.id, author_id=ctx.user.id, body=body)
     ctx.db.add(note)
@@ -152,6 +157,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.READ,
         executor=_get_customer,
+        required_permission=Permission.CUSTOMER_MANAGE,
     )
     registry.register(
         name="search_customers",
@@ -165,6 +171,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.READ,
         executor=_search_customers,
+        required_permission=Permission.CUSTOMER_MANAGE,
     )
     registry.register(
         name="get_customer_tickets",
@@ -176,6 +183,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.READ,
         executor=_get_customer_tickets,
+        required_permission=Permission.CUSTOMER_MANAGE,
     )
     registry.register(
         name="get_customer_history",
@@ -190,6 +198,7 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.READ,
         executor=_get_customer_history,
+        required_permission=Permission.CUSTOMER_MANAGE,
     )
     registry.register(
         name="add_customer_note",
@@ -201,4 +210,5 @@ def register(registry: AgentToolRegistry) -> None:
         },
         risk=ToolRisk.WRITE,
         executor=_add_customer_note,
+        required_permission=Permission.CUSTOMER_MANAGE,
     )

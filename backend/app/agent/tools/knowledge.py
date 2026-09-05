@@ -123,6 +123,10 @@ async def _find_similar_articles(args: dict, ctx: AgentToolContext) -> ToolResul
 
 
 def register(registry: AgentToolRegistry) -> None:
+    # No required_permission on any tool below: GET /knowledge/articles and
+    # GET /knowledge/articles/{id} are open to any authenticated staff
+    # member (Depends(get_current_user), no require_permission gate), so
+    # these read tools match that - not an oversight.
     registry.register(
         name="search_knowledge_base",
         description="Semantic search over this organization's published knowledge base articles.",

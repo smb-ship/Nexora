@@ -52,6 +52,9 @@ async def _list_team_members(args: dict, ctx: AgentToolContext) -> ToolResult:
 
 
 def register(registry: AgentToolRegistry) -> None:
+    # No required_permission: GET /teams and GET /teams/{id} are open to
+    # any authenticated staff member in the existing route, so these
+    # read tools match that.
     registry.register(
         name="list_teams",
         description="List all teams in this organization.",

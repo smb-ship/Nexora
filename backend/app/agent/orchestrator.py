@@ -39,6 +39,13 @@ class AgentOrchestrator:
         # app.agent.security.validators.OPERATIONS_AGENT_SYSTEM_PROMPT.
         self._system_prompt = system_prompt or SYSTEM_PROMPT
 
+    @property
+    def tools(self) -> ToolRegistry:
+        """Public accessor so callers (e.g. app.agent.services.agent_service,
+        which needs risk metadata per tool call for persistence) don't have
+        to reach into the underscored _tools attribute."""
+        return self._tools
+
     async def run_turn(self, history: list[dict], user_message: str, context: ToolContext) -> AgentTurnResult:
         """
         Understand -> decide -> (tool loop) -> respond.

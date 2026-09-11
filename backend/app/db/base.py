@@ -13,3 +13,5 @@ from app.models.knowledge import KnowledgeArticle  # noqa
 from app.models.customer_note import CustomerNote  # noqa
 from app.models.prompt_template import PromptTemplate  # noqa
 from app.models.agent_conversation import AgentConversation, AgentMessage  # noqa
+from app.models.agent_ops.run import AgentRun  # noqa
+from app.models.agent_ops.action import AgentAction  # noqa
